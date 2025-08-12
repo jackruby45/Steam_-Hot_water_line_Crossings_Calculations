@@ -1,0 +1,27 @@
+
+{
+  "short_name": "Pipe Calc",
+  "name": "Multi-Pipeline Heat Transfer Calculator",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌡️</text></svg>",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#48bfe3",
+  "background_color": "#121212",
+  "description": "An offline tool to calculate the heat transfer rate between multiple buried pipelines."
+}

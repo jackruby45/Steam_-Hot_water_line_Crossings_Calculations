@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipeline Heat Transfer Calculator</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌡️</text></svg>">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.179.1",
+    "three/addons/": "https://esm.sh/three@0.179.1/examples/jsm/",
+    "three/": "https://esm.sh/three@^0.179.1/",
+    "path": "https://esm.sh/path@^0.12.7",
+    "vite": "https://esm.sh/vite@^7.1.2"
+  }
+}
+</script>
+  <link rel="stylesheet" href="index.css">
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <main>
+    <div class="container">
+      <h1>Multi-Pipeline Heat Transfer Calculator</h1>
+      <p class="subtitle">Calculate steady-state temperatures for complex buried pipeline configurations.</p>
+      <p class="developer-credit">Developed by John Sigler</p>
+      
+      <div class="tabs">
+        <button class="tab-link active" data-tab="calculator">Calculator</button>
+        <button class="tab-link" data-tab="materials">Material Library</button>
+        <button class="tab-link" data-tab="procedure">Procedure &amp; Theory</button>
+      </div>
+
+      <div id="calculator" class="tab-content active">
+        <div id="calculator-container">
+          <fieldset>
+              <legend>Project Information</legend>
+              <div class="form-grid project-info-grid">
+                  <div class="form-group">
+                      <label for="project-name">Project Name</label>
+                      <textarea id="project-name" name="project-name" rows="1" placeholder="e.g., Downtown Expansion"></textarea>
+                  </div>
+                  <div class="form-group">
+                      <label for="project-location">Location</label>
+                      <textarea id="project-location" name="project-location" rows="1" placeholder="e.g., Springfield, USA"></textarea>
+                  </div>
+                  <div class="form-group">
+                      <label for="system-number">System Number</label>
+                      <textarea id="system-number" name="system-number" rows="1" placeholder="e.g., SYS-12345"></textarea>
+                  </div>
+                  <div class="form-group">
+                      <label for="engineer-name">Engineer's Name</label>
+                      <textarea id="engineer-name" name="engineer-name" rows="1" placeholder="e.g., J. Doe"></textarea>
+                  </div>
+                  <div class="form-group">
+                      <label for="eval-date">Date of Evaluation</label>
+                      <input type="date" id="eval-date" name="eval-date">
+                  </div>
+                  <div class="form-group">
+                      <label for="revision-number">Revision Number</label>
+                      <input type="number" id="revision-number" name="revision-number" value="1" min="0">
+                  </div>
+              </div>
+              <div class="form-group">
+                  <label for="project-description">Project Description</label>
+                  <textarea id="project-description" name="project-description" rows="3" placeholder="Briefly describe the project or calculation purpose."></textarea>
+              </div>
+          </fieldset>
+          
+          <fieldset>
+            <legend>1. Environment</legend>
+             <div class="form-group">
+                <label for="soil-temp">Ambient Soil Temperature (°F)</label>
+                <input type="number" id="soil-temp" name="soil-temp" value="63" required>
+              </div>
+            <div class="sub-fieldset">
+                <h3 class="sub-legend">Soil Layers (from ground surface down)</h3>
+                <div id="soil-layers-list">
+                    <!-- Soil layers will be dynamically added here -->
+                </div>
+                <button type="button" id="add-soil-layer-btn" class="add-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+                    Add Soil Layer
+                </button>
+            </div>
+          </fieldset>
+  
+          <fieldset>
+            <legend>2. Pipelines</legend>
+            <div id="pipe-list">
+                <!-- Pipes will be dynamically added here -->
+            </div>
+            <button type="button" id="add-pipe-btn" class="add-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+                Add Pipe
+            </button>
+          </fieldset>
+  
+          <div class="main-button-group">
+            <button type="button" id="example-btn" class="action-button">Load Example</button>
+            <button type="button" id="calculate-btn">Calculate Temperatures</button>
+          </div>
+        </div>
+        
+        <div id="output-wrapper" style="display: none;">
+          <div id="result-container" role="status" aria-live="polite">
+            <h2 class="results-title">Calculation Results</h2>
+            <div id="results-table-container">
+                <!-- Results table will be injected here -->
+            </div>
+             <div id="results-error-container" class="result-container error" style="display: none;">
+                <!-- Error messages will be displayed here -->
+             </div>
+          </div>
+  
+          <div class="button-group">
+             <button id="save-scenario-btn" class="action-button" title="Save all current inputs to a file">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1-1H7.5a1 1 0 0 0-1 1H2zm3 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3A.5.5 0 0 1 5 5zm2 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3A.5.5 0 0 1 7 5zm2 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3A.5.5 0 0 1 9 5zm2 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3A.5.5 0 0 1 11 5z"/>
+                </svg>
+                <span>Save Scenario</span>
+            </button>
+             <button id="load-scenario-btn" class="action-button" title="Load inputs from a scenario file">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.743 1.874 1.688l.54 3.622h6.07A1.5 1.5 0 0 1 15 8.5v1.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 10V3.5zM2 6h12v2.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V6zM.5 10a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-1.5a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5V10zM12 4.5a.5.5 0 0 0-.5-.5h-10a.5.5 0 0 0-.5.5v1h11v-1z"/>
+                </svg>
+                <span>Load Scenario</span>
+            </button>
+            <input type="file" id="load-scenario-input" accept=".json" style="display:none;" />
+            <button id="copy-latex-btn" class="action-button" title="Copy LaTeX report to clipboard">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5-.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3z"/>
+              </svg>
+              <span id="copy-btn-text">Copy LaTeX Report</span>
+            </button>
+          </div>
+          
+          <div id="visualization-options" style="display: none;">
+            <div class="view-switcher">
+                <input type="radio" id="view-2d" name="view-mode" value="2d" checked>
+                <label for="view-2d">2D View</label>
+                <input type="radio" id="view-3d" name="view-mode" value="3d">
+                <label for="view-3d">3D View</label>
+            </div>
+            <div id="vis-toggles">
+                <label class="vis-toggle-label" for="toggle-flux-vectors">
+                    <input type="checkbox" id="toggle-flux-vectors">
+                    <span>Show Heat Flux Vectors</span>
+                </label>
+            </div>
+            <div id="isotherm-controls">
+                <label class="isotherm-title">2D Isotherm Contours</label>
+                <div id="isotherm-list">
+                    <!-- Isotherm rows will be added here -->
+                </div>
+                <button id="add-isotherm-btn" class="add-btn-small">+</button>
+            </div>
+            <div id="isosurface-controls">
+                <label class="isotherm-title">3D Isosurface Contours</label>
+                <div id="isosurface-list">
+                    <!-- Isosurface rows will be added here -->
+                </div>
+                <button id="add-isosurface-btn" class="add-btn-small">+</button>
+            </div>
+          </div>
+
+          <div id="canvas-wrapper">
+              <canvas id="heat-transfer-canvas" width="800" height="400"></canvas>
+              <canvas id="webgl-canvas" width="800" height="400" style="display: none;"></canvas>
+              <div id="tooltip" class="canvas-tooltip"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="materials" class="tab-content">
+        <div class="material-library-container">
+          <h2>Custom Material Library</h2>
+          <p>Define custom materials to use in your calculations. They will be saved in your browser and available for future sessions.</p>
+
+          <div class="material-category">
+            <h3>Soils</h3>
+            <div class="material-table-container">
+                <table id="soil-material-table">
+                    <thead><tr><th>Name</th><th>Thermal Conductivity (BTU/hr-ft-°F)</th><th>Actions</th></tr></thead>
+                    <tbody><!-- Custom soil materials --></tbody>
+                </table>
+            </div>
+            <form id="add-soil-material-form" class="material-form"><input type="text" placeholder="Material Name" required><input type="number" step="any" placeholder="k-value" required><button type="submit">Add Soil</button></form>
+          </div>
+          
+          <div class="material-category">
+            <h3>Pipes</h3>
+            <div class="material-table-container">
+                <table id="pipe-material-table">
+                    <thead><tr><th>Name</th><th>Thermal Conductivity (BTU/hr-ft-°F)</th><th>Actions</th></tr></thead>
+                    <tbody><!-- Custom pipe materials --></tbody>
+                </table>
+            </div>
+            <form id="add-pipe-material-form" class="material-form"><input type="text" placeholder="Material Name" required><input type="number" step="any" placeholder="k-value" required><button type="submit">Add Pipe Material</button></form>
+          </div>
+
+          <div class="material-category">
+            <h3>Insulation</h3>
+            <div class="material-table-container">
+                <table id="insulation-material-table">
+                    <thead><tr><th>Name</th><th>Thermal Conductivity (BTU/hr-ft-°F)</th><th>Actions</th></tr></thead>
+                    <tbody><!-- Custom insulation materials --></tbody>
+                </table>
+            </div>
+            <form id="add-insulation-material-form" class="material-form"><input type="text" placeholder="Material Name" required><input type="number" step="any" placeholder="k-value" required><button type="submit">Add Insulation</button></form>
+          </div>
+          
+          <div class="material-category">
+            <h3>Bedding</h3>
+            <div class="material-table-container">
+                <table id="bedding-material-table">
+                    <thead><tr><th>Name</th><th>Thermal Conductivity (BTU/hr-ft-°F)</th><th>Actions</th></tr></thead>
+                    <tbody><!-- Custom bedding materials --></tbody>
+                </table>
+            </div>
+            <form id="add-bedding-material-form" class="material-form"><input type="text" placeholder="Material Name" required><input type="number" step="any" placeholder="k-value" required><button type="submit">Add Bedding</button></form>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="procedure" class="tab-content">
+        <div class="prose">
+            <h2>Introduction to the Methodology</h2>
+            <p>This tool performs a steady-state conductive heat transfer analysis for multiple buried pipelines. "Steady-state" implies that the temperatures are stable and no longer changing over time. The analysis determines the final temperature of "affected" pipes by calculating the cumulative heating effect from all designated "heat source" pipes and adding it to the ambient soil temperature. The methodology is built upon three fundamental engineering principles:</p>
+            <ol>
+                <li><strong>The Thermal Resistance Network Model:</strong> To calculate the amount of heat leaving a source.</li>
+                <li><strong>The Method of Images:</strong> To accurately model the effect of the ground surface.</li>
+                <li><strong>The Principle of Superposition:</strong> To combine the heating effects from multiple sources.</li>
+            </ol>
+            
+            <hr>
+
+            <h2>Step 1: Calculate Heat Flux (Q) from each Heat Source</h2>
+            <h4>Why is this necessary?</h4>
+            <p>Before we can determine how a hot pipe affects its neighbors, we must first quantify <em>how much</em> heat it emits into the soil. A very hot pipe that is well-insulated might lose less heat than a cooler, uninsulated one. This rate of heat loss is known as <strong>heat flux (Q)</strong>, and it represents the "strength" of the heat source. In this 2D analysis, it's measured in Watts per meter of pipe length (W/m).</p>
+            
+            <h4>How is it calculated? The Thermal-Electrical Analogy</h4>
+            <p>The calculation uses the thermal resistance model, which is a direct analogue to Ohm's Law in electrical circuits. In heat transfer, heat flow (Q) is like electrical current, temperature difference (&Delta;T) is like voltage, and thermal resistance (R) is like electrical resistance.</p>
+            <p><strong>Equation 1: Heat Flux</strong></p>
+            <code>Q = &Delta;T / R_total = (T_pipe - T_soil) / (R_pipe + R_ins + R_bed + R_soil)</code>
+            <ul>
+                <li><strong>Q:</strong> Heat Flux per unit length (W/m)</li>
+                <li><strong>&Delta;T:</strong> Overall temperature difference between the fluid in the pipe and the far-field soil (°C or K)</li>
+                <li><strong>R_total:</strong> Total thermal resistance per unit length (K&middot;m/W)</li>
+            </ul>
+            <p>The total resistance, <code>R_total</code>, is the sum of the resistances of each layer the heat must pass through sequentially (pipe wall, insulation, bedding, and soil), just like electrical resistors in series.</p>
+
+            <h4>Source of Resistance Formulas</h4>
+            <p>The resistance formulas are derived from Fourier's Law of Conduction (<code>Q = -k &middot; A &middot; dT/dx</code>) applied to specific geometries.</p>
+            
+            <h5><strong>A) Pipe, Insulation, and Bedding Resistance (Cylindrical Layers)</strong></h5>
+            <p>For heat flowing radially outward through a hollow cylinder (like a pipe or its insulation layer), integrating Fourier's Law for a cylindrical coordinate system yields the following resistance formula:</p>
+            <p><strong>Equation 2: Cylindrical Thermal Resistance</strong></p>
+            <code>R_cyl = ln(r_outer / r_inner) / (2 &middot; &pi; &middot; k)</code>
+            <ul>
+                <li><strong>R_cyl:</strong> Thermal resistance of the cylindrical layer (K&middot;m/W)</li>
+                <li><strong>ln:</strong> Natural logarithm</li>
+                <li><strong>r_outer:</strong> Outer radius of the layer (m)</li>
+                <li><strong>r_inner:</strong> Inner radius of the layer (m)</li>
+                <li><strong>k:</strong> Thermal conductivity of the material (W/m-K)</li>
+            </ul>
+            <p><em>Source: See "Conductive Heat Transfer" in <a href="https://www.engineeringtoolbox.com/thermal-resistance-d_867.html" target="_blank" rel="noopener">The Engineering Toolbox</a>. The derivation is a standard example in most undergraduate heat transfer textbooks.</em></p>
+
+            <h5><strong>B) Soil Resistance (Buried Cylinder)</strong></h5>
+            <p>The soil's resistance is complex because the ground surface acts as a near-perfect insulator (an adiabatic boundary), preventing heat from escaping into the air. To model this, we use the <strong>Method of Images</strong>. This powerful mathematical trick involves imagining a "mirror image" of the heat source located above the ground at the same distance the real pipe is below it. This creates a symmetrical system where the ground surface becomes a line of zero heat flow, correctly modeling the physical boundary. The established formula for the thermal resistance of the soil for a single buried pipe is:</p>
+            <p><strong>Equation 3: Soil Thermal Resistance (Method of Images)</strong></p>
+            <code>R_soil = ln(2z / r_outer) / (2 &middot; &pi; &middot; k_soil_eff)</code>
+            <ul>
+                <li><strong>R_soil:</strong> Thermal resistance of the soil (K&middot;m/W)</li>
+                <li><strong>z:</strong> Depth from the ground surface to the pipe's centerline (m)</li>
+                <li><strong>r_outer:</strong> The total outer radius of the pipe including all its layers (pipe, insulation, bedding) (m)</li>
+                <li><strong>k_soil_eff:</strong> The effective thermal conductivity of the soil surrounding the pipe (W/m-K). This tool calculates it by averaging the k-values of the soil layers the pipe directly contacts.</li>
+            </ul>
+            <p><em>Source: This formula is derived from shape factor analysis for conduction, a topic covered in detail by Incropera & DeWitt's "Fundamentals of Heat and Mass Transfer". A practical application is shown at <a href="https://www.engineeringtoolbox.com/buried-pipes-heat-loss-d_1120.html" target="_blank" rel="noopener">The Engineering Toolbox</a>.</em></p>
+
+            <hr>
+
+            <h2>Step 2: Calculate Temperature Rise (&Delta;T) at an Affected Pipe</h2>
+            <h4>Why is this necessary?</h4>
+            <p>With the heat flux (Q) from a source known, we can now calculate its effect at a distance. The temperature increase caused by the source diminishes as you move away from it. This step calculates the specific temperature rise at the exact centerline location of an 'Affected Pipe' caused by one 'Heat Source'. This calculation is performed for each heat source's influence on each affected pipe.</p>
+
+            <h4>How is it calculated?</h4>
+            <p>This again uses the Method of Images. The temperature rise at any point in the soil is a function of its distance from the real heat source and its distance from the imaginary "image" source.</p>
+            <p><strong>Equation 4: Temperature Rise from a Line Source</strong></p>
+            <code>&Delta;T_rise = (Q / (2 &middot; &pi; &middot; k_path_eff)) &middot; ln(d_image / d_real)</code>
+            <ul>
+                <li><strong>&Delta;T_rise:</strong> The temperature increase at the target point due to the source (°C or K)</li>
+                <li><strong>Q:</strong> The heat flux from the source pipe (W/m), calculated in Step 1.</li>
+                <li><strong>k_path_eff:</strong> The effective thermal conductivity of the soil along the direct path between the source and target pipes (W/m-K). The tool calculates this by modeling the path as a series of thermal resistors and finding a harmonically-averaged conductivity.</li>
+                <li><strong>d_real:</strong> The direct, straight-line distance between the center of the source pipe and the center of the affected pipe (m).</li>
+                <li><strong>d_image:</strong> The distance from the center of the affected pipe to the center of the "image" of the source pipe (m).</li>
+            </ul>
+             <p><em>Source: This equation is a fundamental result of potential flow theory applied to heat transfer, which is mathematically analogous to problems in groundwater flow and electrostatics. A clear derivation for this model is available at <a href="https://geo455.github.io/Chapter5/line_source_model.html" target="_blank" rel="noopener">Line Source Model derivation</a> from a university course on hydrogeology.</em></p>
+
+            <hr>
+
+            <h2>Step 3: Summing the Effects & Final Temperature</h2>
+            <h4>Why is this necessary?</h4>
+            <p>An affected pipe is often influenced by multiple heat sources. We must combine all these individual heating effects to find the final, true temperature.</p>
+
+            <h4>How is it done? The Principle of Superposition</h4>
+            <p>The governing equations for steady-state heat conduction are linear. This means we can use the <strong>Principle of Superposition</strong>, which states that the total effect of multiple influences is the simple sum of the individual effects. We calculate the `&Delta;T_rise` from each heat source independently (using Step 2) and then add them all to the starting ambient soil temperature.</p>
+            <p><strong>Equation 5: Final Temperature by Superposition</strong></p>
+            <code>T_final = T_soil + &Sigma;(&Delta;T_rise_from_source_1 + &Delta;T_rise_from_source_2 + ...)</code>
+            <ul>
+                <li><strong>T_final:</strong> The final calculated temperature of the affected pipe (°C)</li>
+                <li><strong>T_soil:</strong> The ambient, undisturbed soil temperature (°C)</li>
+                <li><strong>&Sigma;(&Delta;T_rise):</strong> The sum of all temperature rises caused by all heat sources.</li>
+            </ul>
+             <p><em>Source: The superposition principle is a cornerstone of physics and engineering for linear systems, including heat transfer, structural analysis, and circuit theory. See <a href="https://en.wikipedia.org/wiki/Superposition_principle#Application_to_linear_systems" target="_blank" rel="noopener">Wikipedia: Superposition Principle</a> for a general overview.</em></p>
+             
+            <hr>
+            
+            <h2>Handling Different Pipe Orientations</h2>
+            <p>This is a 3D problem, but the core formulas are derived for a 2D (cross-sectional) view. The tool handles this as follows:</p>
+            <ul>
+                <li><strong>Parallel Pipes:</strong> When two pipes run in the same direction (e.g., both "Parallel" or both "Perpendicular"), the heat transfer between them is consistent along their length. The problem is purely two-dimensional, and the equations above are used directly based on their coordinates in the 2D plane.</li>
+                <li><strong>Mixed Orientations (e.g., Perpendicular vs. Parallel):</strong> This creates a complex 3D interaction. This tool uses a common engineering approximation by calculating the temperature rise at the <strong>point of closest approach</strong>. In the 2D cross-section view, this is modeled by assuming the horizontal distance between the pipes is zero and calculating the thermal interaction based only on their vertical and perpendicular separation. This simplification captures the maximum thermal influence one pipe has on the other, which is typically the primary concern for design and safety analysis.</li>
+            </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- TEMPLATES FOR DYNAMIC UI -->
+  <div id="templates" style="display: none;">
+      <!-- Soil Layer Template -->
+      <div class="soil-layer-row">
+          <div class="form-group">
+              <label>Layer Material</label>
+              <select class="soil-layer-material-select"></select>
+          </div>
+          <div class="form-group">
+              <label>Layer Thickness (ft)</label>
+              <input type="number" class="soil-layer-thickness" value="5" min="0.1" step="0.1" required>
+          </div>
+          <button type="button" class="remove-btn" title="Remove Layer">&times;</button>
+      </div>
+
+      <!-- Pipe Template -->
+      <div class="pipe-row">
+          <button type="button" class="remove-btn" title="Remove Pipe">&times;</button>
+          <div class="form-group pipe-name-group">
+            <label>Pipe ID</label>
+            <input type="text" class="pipe-name" value="Pipe 1">
+          </div>
+          <div class="form-group">
+            <label>Pipe Role</label>
+            <select class="pipe-role">
+                <option value="heat_source">Heat Source</option>
+                <option value="affected_pipe" selected>Affected Pipe</option>
+            </select>
+          </div>
+          <div class="form-group">
+              <label>Orientation</label>
+              <select class="pipe-orientation">
+                  <option value="parallel" selected>Parallel (into screen)</option>
+                  <option value="perpendicular">Perpendicular (across screen)</option>
+              </select>
+          </div>
+          <div class="coord-group x-coord-group">
+            <div class="form-group">
+              <label>X-Coordinate (ft)</label>
+              <input type="number" class="pipe-x" value="0" step="0.1">
+            </div>
+          </div>
+          <div class="coord-group y-coord-group hidden">
+            <div class="form-group">
+              <label>Y-Coordinate (ft)</label>
+              <input type="number" class="pipe-y" value="0" step="0.1">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Z-Coordinate (Depth, ft)</label>
+            <input type="number" class="pipe-z" value="4" min="0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>Temperature (°F)</label>
+            <input type="number" class="pipe-temp" value="450" disabled>
+          </div>
+          <div class="form-group">
+            <label>Pipe Size (Sch. 40)</label>
+            <select class="pipe-preset"></select>
+          </div>
+          <div class="form-group">
+            <label>Pipe OD (in)</label>
+            <input type="number" class="pipe-od" min="0" step="0.001">
+          </div>
+          <div class="form-group">
+            <label>Wall Thk. (in)</label>
+            <input type="number" class="pipe-thickness" min="0" step="0.001">
+          </div>
+           <div class="form-group">
+            <label>Pipe Material</label>
+            <select class="pipe-material-select"></select>
+          </div>
+          <div class="form-group">
+            <label>Insulation Thk. (in)</label>
+            <input type="number" class="pipe-insulation-thickness" value="0" min="0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>Insulation Material</label>
+            <select class="pipe-insulation-material-select"></select>
+          </div>
+          <div class="form-group">
+            <label>Bedding Thk. (in)</label>
+            <input type="number" class="pipe-bedding-thickness" value="0" min="0" step="0.1">
+          </div>
+           <div class="form-group">
+            <label>Bedding Material</label>
+            <select class="pipe-bedding-material-select"></select>
+          </div>
+          <div class="pipe-error-container"></div>
+      </div>
+
+      <!-- Isotherm Template -->
+      <div class="isotherm-row">
+          <input type="checkbox" class="toggle-isotherm-row" checked>
+          <input type="number" class="isotherm-temp-input">
+          <label class="isotherm-unit-label">°F</label>
+          <input type="color" class="isotherm-color-input" value="#FFFFFF">
+          <button type="button" class="remove-btn remove-isotherm-btn">&times;</button>
+      </div>
+
+      <!-- Isosurface Template -->
+      <div class="isosurface-row">
+          <input type="checkbox" class="toggle-isosurface-row" checked>
+          <input type="number" class="isosurface-temp-input">
+          <label class="isotherm-unit-label">°F</label>
+          <input type="color" class="isosurface-color-input" value="#48BFE3">
+          <div class="opacity-slider-group">
+              <label>Opacity</label>
+              <input type="range" class="isosurface-opacity-slider" min="0" max="1" step="0.05" value="0.3">
+          </div>
+          <button type="button" class="remove-btn remove-isosurface-btn">&times;</button>
+      </div>
+
+  </div>
+
+  <script>
+      if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/sw.js').then(registration => {
+                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
+              }, err => {
+                  console.log('ServiceWorker registration failed: ', err);
+              });
+          });
+      }
+  </script>
+  <script type="module" src="index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

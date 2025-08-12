@@ -1,0 +1,5 @@
+{
+  "name": " Multi-Pipeline Heat Transfer Calculator - 3",
+  "description": "An offline tool to calculate the heat transfer rate between multiple buried pipelines.",
+  "requestFramePermissions": []
+}
